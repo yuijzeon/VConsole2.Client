@@ -5,4 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Babyduck.VConsole2.Client\Babyduck.VConsole2.Client.csproj" />
+  </ItemGroup>
 </Project>
