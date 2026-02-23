@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Babyduck.VConsole2.Client.Sample/Babyduck.VConsole2.Client.Sample.csproj" />
+  <Project Path="Babyduck.VConsole2.Client/Babyduck.VConsole2.Client.csproj" />
+</Solution>
