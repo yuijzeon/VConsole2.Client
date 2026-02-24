@@ -2,5 +2,18 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
+    <PackageId>Babyduck.VConsole2.Client</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Tinitn Ting</Authors>
+    <Description>A C# client library for interacting with VConsole2 in Source 2 games.</Description>
+    <PackageProjectUrl>https://github.com/yuijzeon/VConsole2.Client</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/yuijzeon/VConsole2.Client</RepositoryUrl>
+    <PackageTags>VConsole2;Source2;CS2;Dota2;Console</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>
