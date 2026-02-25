@@ -6,13 +6,17 @@ namespace Babyduck.VConsole2.Client
 {
     public class Prnt : IPackage
     {
-        public string TypeName => "PRNT";
         public uint ChannelId { get; set; }
         public ulong Timestamp { get; set; }
         public uint Rgba { get; set; }
         public string Message { get; set; }
 
-        public void FromBytes(byte[] payload)
+        public bool IsCompatible(ChunkHeader header)
+        {
+            return header.GetTypeName() == "PRNT";
+        }
+
+        public void LoadFrom(ChunkHeader header, byte[] payload)
         {
             ChannelId = BinaryPrimitives.ReadUInt32BigEndian(payload.AsSpan(0, 4));
             Timestamp = BitConverter.ToUInt64(payload, 4);

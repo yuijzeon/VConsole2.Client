@@ -2,7 +2,7 @@
 {
     public interface IPackage
     {
-        public string TypeName { get; }
-        public void FromBytes(byte[] payload);
+        public bool IsCompatible(ChunkHeader header);
+        public void LoadFrom(ChunkHeader header, byte[] payload);
     }
 }

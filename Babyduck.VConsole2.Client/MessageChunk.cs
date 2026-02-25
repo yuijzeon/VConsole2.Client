@@ -12,12 +12,12 @@ namespace Babyduck.VConsole2.Client
         public IPackage? ParsePayload<T>() where T : IPackage, new()
         {
             var package = new T();
-            if (Header.GetTypeName() != package.TypeName)
+            if (!package.IsCompatible(Header))
             {
                 return null;
             }
-            
-            package.FromBytes(Payload);
+
+            package.LoadFrom(Header, Payload);
             return package;
         }
     }
