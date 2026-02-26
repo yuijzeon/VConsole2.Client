@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -16,11 +19,14 @@ namespace Babyduck.VConsole2.Client
         private readonly int _port;
         private readonly ushort _version;
         private readonly TcpClient _client = new TcpClient();
-        private NetworkStream _stream;
-        private CancellationTokenSource _cts;
+        private NetworkStream? _stream;
+        private CancellationTokenSource? _cts;
 
-        public event Action<MessageChunk>? OnMessageReceived;
-        public event Action<Exception>? OnException;
+        private readonly Subject<MessageChunk> _messageSubject = new Subject<MessageChunk>();
+        private readonly Subject<Exception> _exceptionSubject = new Subject<Exception>();
+
+        public IObservable<MessageChunk> OnMessageReceived => _messageSubject.AsObservable();
+        public IObservable<Exception> OnException => _exceptionSubject.AsObservable();
 
         public VConsole2Client(string hostname = "localhost", int port = 29000, ushort version = 0x00D4)
         {
@@ -31,9 +37,14 @@ namespace Babyduck.VConsole2.Client
 
         public void Dispose()
         {
-            _cts.Cancel();
-            _stream.Dispose();
+            _cts?.Cancel();
+            _stream?.Dispose();
             _client.Dispose();
+
+            _messageSubject.OnCompleted();
+            _exceptionSubject.OnCompleted();
+            _messageSubject.Dispose();
+            _exceptionSubject.Dispose();
         }
 
         public async Task Connect()
@@ -54,13 +65,14 @@ namespace Babyduck.VConsole2.Client
                 }
                 catch (Exception ex)
                 {
-                    OnException?.Invoke(ex);
+                    _exceptionSubject.OnNext(ex);
                 }
             }, token);
         }
 
-        public async Task SendCommand(string command)
+        public async Task SendCommand(string command, CancellationToken ct = default)
         {
+            var stream = GetRequireStream();
             var totalLength = Encoding.ASCII.GetByteCount(command) + Marshal.SizeOf<ChunkHeader>() + 1;
 
             var header = new ChunkHeader
@@ -76,13 +88,13 @@ namespace Babyduck.VConsole2.Client
             payload.AddRange(Encoding.ASCII.GetBytes(command));
             payload.Add(0x00);
 
-            await _stream.WriteAsync(payload.ToArray()).ConfigureAwait(false);
+            await stream.WriteAsync(payload.ToArray(), ct).ConfigureAwait(false);
         }
 
-        private async Task ReadMessage(CancellationToken token)
+        private async Task ReadMessage(CancellationToken ct = default)
         {
             var headerBuf = new byte[Marshal.SizeOf<ChunkHeader>()];
-            await ReadExactlyAsync(headerBuf, token);
+            await ReadExactlyAsync(headerBuf, ct);
 
             var header = MemoryMarshal.Read<ChunkHeader>(headerBuf);
             header.Version = BinaryPrimitives.ReverseEndianness(header.Version);
@@ -94,22 +106,23 @@ namespace Babyduck.VConsole2.Client
             if (payloadSize > 0)
             {
                 payloadBuf = new byte[payloadSize];
-                await ReadExactlyAsync(payloadBuf, token);
+                await ReadExactlyAsync(payloadBuf, ct);
             }
 
-            OnMessageReceived?.Invoke(new MessageChunk
+            _messageSubject.OnNext(new MessageChunk
             {
                 Header = header,
-                Payload = payloadBuf
+                Payload = payloadBuf,
             });
         }
 
         private async Task ReadExactlyAsync(Memory<byte> buffer, CancellationToken token)
         {
+            var stream = GetRequireStream();
             var totalRead = 0;
             while (totalRead < buffer.Length)
             {
-                var read = await _stream.ReadAsync(buffer[totalRead..], token).ConfigureAwait(false);
+                var read = await stream.ReadAsync(buffer[totalRead..], token).ConfigureAwait(false);
                 if (read == 0)
                 {
                     throw new EndOfStreamException();
@@ -117,6 +130,16 @@ namespace Babyduck.VConsole2.Client
 
                 totalRead += read;
             }
+        }
+
+        private NetworkStream GetRequireStream()
+        {
+            if (_stream == null || !_client.Connected)
+            {
+                throw new InvalidOperationException("VConsole2Client is not connected. Call Connect() before using this method.");
+            }
+
+            return _stream;
         }
     }
 }

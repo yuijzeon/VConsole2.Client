@@ -1,16 +1,21 @@
-﻿namespace Babyduck.VConsole2.Client.Sample;
+﻿using System.Reactive.Linq;
+
+namespace Babyduck.VConsole2.Client.Sample;
 
 public static class Program
 {
     public static async Task Main(string[] args)
     {
-        var vConsole = new VConsole2Client("127.0.0.1", 29000);
-        vConsole.OnMessageReceived += message =>
-        {
-            var package = message.ParsePayload<Prnt>();
-            if (package is Prnt prnt)
+        var vConsole = new VConsole2Client("127.0.0.1");
+        vConsole.OnMessageReceived
+            .Select(chunk => chunk.ParsePayload<Prnt>())
+            .Where(package => package is Prnt)
+            .Select(package => (Prnt)package!)
+            .Subscribe(prnt =>
             {
-                if (prnt.Rgba != 0)
+                var hasColor = prnt.Rgba != 0;
+
+                if (hasColor)
                 {
                     var r = (prnt.Rgba >> 24) & 0xFF;
                     var g = (prnt.Rgba >> 16) & 0xFF;
@@ -19,12 +24,12 @@ public static class Program
                 }
 
                 Console.Write($"[{prnt.Timestamp}] {prnt.ChannelId} {prnt.Message}");
-                if (prnt.Rgba != 0)
+
+                if (hasColor)
                 {
                     Console.Write("\e[0m");
                 }
-            }
-        };
+            });
 
         await vConsole.Connect();
 
