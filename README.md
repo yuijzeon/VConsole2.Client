@@ -47,6 +47,16 @@ dotnet add package Babyduck.VConsole2.Client
 
 The sample project demonstrates typical usage and is the best starting point for integration.
 
+## Related projects
+
+You can also refer to the following projects:
+
+- https://github.com/Penguinwizzard/VConsoleLib
+- https://github.com/uilton-oliveira/VConsoleLib.python
+- https://github.com/theokyr/CS2RemoteConsole
+- https://github.com/SinZ163/VConsoleLib.Net/tree/master
+- https://github.com/xezno/VConsoleLib
+
 ## Contributing
 
 Contributions and fixes are welcome. Please open issues or pull requests on the upstream repository: https://github.com/yuijzeon/VConsole2.Client
