@@ -19,7 +19,7 @@ A lightweight C# client library for interacting with VConsole2 used in Source 2 
 | Version | Change                                                                |
 |---------|-----------------------------------------------------------------------|
 | 0.1.0   | First version.                                                        |
-| 1.x.x   | The event system has been migrated from standard C# events to Rx.NET. |
+| 1.0.0   | The event system has been migrated from standard C# events to Rx.NET. |
 
 ## Requirements
 
